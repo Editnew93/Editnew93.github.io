@@ -1,102 +1,401 @@
-<video autoplay src="/rickroll.mp4"></video>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roblox List IDs</title>
+  <meta name="description" content="Searchable list that loads ./id.json, supports game filtering via dropdown checkboxes, sorting, keyboard navigation and copy-to-clipboard." />
+  <style>
+    /* ---------- THEME & LAYOUT ---------- */
+    :root{
+      --bg: #071021;
+      --card: #0f1720;
+      --muted: #9aa3b2;
+      --accent: #4f9cff;
+      --glass: rgba(255,255,255,0.03);
+      --radius: 12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100%;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      background: linear-gradient(180deg, #061026 0%, var(--bg) 100%);
+      color: #e6eef8;
+      padding:28px;
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    .app{max-width:980px;margin:0 auto}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    h1{font-size:18px;margin:0}
+    .meta{color:var(--muted);font-size:13px}
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* ---------- CONTROLS ---------- */
+    .controls{display:grid;grid-template-columns:1fr 280px 160px;gap:12px;margin-bottom:14px}
+    @media (max-width:920px){.controls{grid-template-columns:1fr 220px 140px}};
+    @media (max-width:720px){.controls{grid-template-columns:1fr;}}
 
-<video autoplay src="/rickroll.mp4"></video>
+    .search{display:flex;align-items:center;background:var(--card);padding:8px;border-radius:10px}
+    .search button{border:0;background:transparent;color:var(--muted);padding:8px;border-radius:8px;cursor:pointer}
+    .search input{flex:1;border:0;background:transparent;color:inherit;font-size:15px;padding:8px 10px;outline:none}
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* games dropdown (selection box) */
+    .games-dropdown{position:relative}
+    .games-btn{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;cursor:pointer;color:white;}
+    .games-panel{position:absolute;left:0;right:0;top:calc(100% + 8px);background:var(--card);border-radius:10px;padding:10px;box-shadow:0 18px 48px rgba(2,6,23,0.65);max-height:300px;overflow:auto;z-index:30;display:none;}
+    .games-panel.show{display:block}
+    .games-panel .games-list{display:flex;flex-direction:column;gap:8px}
+    .game-item{display:flex;gap:8px;align-items:center}
+    .game-item input{width:16px;height:16px}
+    .game-item label{font-size:13px;color:var(--muted);user-select:none}
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* sorting area */
+    .right-group{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+    select{background:var(--card);border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;color:inherit}
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* ---------- LIST ---------- */
+    .list{background:linear-gradient(180deg,var(--card), rgba(15,23,32,0.96));border-radius:var(--radius);overflow:hidden;box-shadow:0 12px 40px rgba(2,6,23,0.6)}
+    .row{display:grid;grid-template-columns:1.4fr 1fr 120px 44px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    @media (max-width:720px){.row{grid-template-columns:1fr 120px 72px}}
 
-<video autoplay src="/rickroll.mp4"></video>
+    .name{font-weight:600;word-break:break-word}
+    .id{font-family:var(--mono);opacity:0.9;background:var(--glass);padding:6px 8px;border-radius:8px;display:inline-block}
+    .badge{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);color:var(--muted);border:1px solid rgba(255,255,255,0.02)}
 
-<video autoplay src="/rickroll.mp4"></video>
+    .actions{display:flex;gap:8px}
+    .icon-btn{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:8px;border:0;background:var(--accent);color:#05233f;font-weight:700;cursor:pointer}
+    .copy-btn{padding:8px 12px;border-radius:8px;border:0;background:linear-gradient(180deg,var(--accent),#357bd6);color:white;cursor:pointer}
 
-<video autoplay src="/rickroll.mp4"></video>
+    .empty{padding:36px;text-align:center;color:var(--muted)}
+    .count{padding:10px 16px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
 
-<video autoplay src="/rickroll.mp4"></video>
+    mark{background:rgba(255,215,0,0.12);color:inherit;padding:0 4px;border-radius:4px}
+    .row[aria-selected="true"]{outline:2px solid rgba(79,156,255,0.18);background:rgba(255,255,255,0.01)}
 
-<video autoplay src="/rickroll.mp4"></video>
+    .toast{position:fixed;right:20px;bottom:20px;background:#061328;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.6);color:var(--muted);font-size:13px}
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* small utility */
+    .small{font-size:13px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Roblox ID</h1>
+      <div class="meta">Load <code>our ids,</code> Get some free ids for games.</div>
+    </header>
 
-<video autoplay src="/rickroll.mp4"></video>
+    <!-- CONTROLS: search | games dropdown | sorting -->
+    <div class="controls">
+      <div class="search" role="search" aria-label="Search">
+        <button id="clear" title="Clear">✖</button>
+        <input id="q" placeholder="Search by name or ID... (press / to focus)" aria-label="Search list" />
+        <button id="reload" title="Reload JSON">⟳</button>
+      </div>
 
-<video autoplay src="/rickroll.mp4"></video>
+      <!-- GAMES DROPDOWN (selection box) -->
+      <div class="games-dropdown" id="gamesDropdown">
+        <button id="gamesToggle" class="games-btn" aria-haspopup="true" aria-expanded="false">Games ▾ <span id="gamesSummary" class="small" style="margin-left:8px">All</span></button>
+        <div id="gamesPanel" class="games-panel" role="menu" aria-hidden="true">
+          <div class="games-list" id="gamesList"><!-- checkboxes inserted here --></div>
+        </div>
+      </div>
 
-<video autoplay src="/rickroll.mp4"></video>
+      <div class="right-group">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label class="small">Sorting</label>
+          <select id="sort" aria-label="Sort">
+            <option value="name">Sort By Name</option>
+            <option value="id">Sort By ID</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
-<video autoplay src="/rickroll.mp4"></video>
+    <!-- LIST -->
+    <div class="list" id="list" role="list"></div>
+    <div class="count" id="count"></div>
 
-<video autoplay src="/rickroll.mp4"></video>
+    <!-- TOAST -->
+    <div id="toast" class="toast" style="display:none" aria-live="polite"></div>
+  </div>
 
-<video autoplay src="/rickroll.mp4"></video>
+  <script>
+    /* ========================
+       Smart List — Full JS
+       - fetch('./id.json')
+       - games dropdown (checkboxes inside panel)
+       - search with safe highlight (no regex)
+       - sort by name / id
+       - keyboard navigation
+       - copy to clipboard with toast
+       ======================== */
 
-<video autoplay src="/rickroll.mp4"></video>
+    const $ = (s)=>document.querySelector(s);
+    const qEl = $('#q');
+    const listEl = $('#list');
+    const countEl = $('#count');
+    const toast = $('#toast');
+    const clearBtn = $('#clear');
+    const reloadBtn = $('#reload');
+    const sortSel = $('#sort');
+    const gamesListEl = $('#gamesList');
+    const gamesToggle = $('#gamesToggle');
+    const gamesPanel = $('#gamesPanel');
+    const gamesDropdown = $('#gamesDropdown');
+    const gamesSummary = $('#gamesSummary');
 
-<video autoplay src="/rickroll.mp4"></video>
+    let items = [];        // all loaded items
+    let filtered = [];     // after applying filters
+    let focusedIndex = -1; // keyboard nav
 
-<video autoplay src="/rickroll.mp4"></video>
+    // small helpers
+    function showToast(text){
+      toast.textContent = text;
+      toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.display = 'none', 1200);
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    function debounce(fn, t=160){ let id; return (...a)=>{ clearTimeout(id); id = setTimeout(()=> fn(...a), t); }; }
 
-<video autoplay src="/rickroll.mp4"></video>
+    // LOAD
+    async function loadFromPath(path='./id.json'){
+      try{
+        const res = await fetch(path);
+        if(!res.ok) throw new Error('Fetch failed: ' + res.status);
+        const json = await res.json();
+        items = sanitize(json);
+        buildGameFilters();
+        applyAll();
+        showToast('Loaded ' + items.length + ' items');
+      }catch(err){
+        console.error(err);
+        showToast('Failed to load ./id.json');
+      }
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    function sanitize(arr){
+      if(!Array.isArray(arr)) return [];
+      return arr.map((o,i)=>({
+        name: String(o.name ?? o.title ?? '') || ('Item ' + (i+1)),
+        id: String(o.id ?? o.ID ?? o.uid ?? ''),
+        game: String(o.game ?? o.gameName ?? 'Unknown')
+      }));
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* ------------------
+       Games dropdown & checkbox builder
+       - creates an "All" checkbox and one checkbox per game
+       - keeps dataset stable by using index-based ids (safe)
+    ------------------ */
+    function buildGameFilters(){
+      // unique sorted games
+      const games = Array.from(new Set(items.map(it=>it.game))).sort((a,b)=> a.localeCompare(b));
 
-<video autoplay src="/rickroll.mp4"></video>
+      gamesListEl.innerHTML = '';
 
-<video autoplay src="/rickroll.mp4"></video>
+      // ALL checkbox (checked by default)
+      const allWrap = document.createElement('div');
+      allWrap.className = 'game-item';
+      allWrap.innerHTML = `<input type="checkbox" data-game="__all__" id="g_all" checked><label for="g_all">All</label>`;
+      gamesListEl.appendChild(allWrap);
 
-<video autoplay src="/rickroll.mp4"></video>
+      const allCb = allWrap.querySelector('input');
+      allCb.addEventListener('change', ()=>{
+        // if All is checked, uncheck others; when unchecked, keep previous state (simple behavior)
+        const others = Array.from(gamesListEl.querySelectorAll('input[data-idx]'));
+        if(allCb.checked){ others.forEach(cb=> cb.checked = false); }
+        applyAll(); updateGamesSummary();
+      });
 
-<video autoplay src="/rickroll.mp4"></video>
+      // individual game checkboxes
+      games.forEach((g, idx)=>{
+        const wrap = document.createElement('div');
+        wrap.className = 'game-item';
+        const id = 'g_' + idx;
+        wrap.innerHTML = `<input type="checkbox" id="${id}" data-idx="${idx}"><label for="${id}">${escapeHtml(g)}</label>`;
+        gamesListEl.appendChild(wrap);
 
-<video autoplay src="/rickroll.mp4"></video>
+        const cb = wrap.querySelector('input');
+        cb.addEventListener('change', ()=>{
+          // if any individual checked, uncheck All
+          const all = gamesListEl.querySelector('input[data-game="__all__"]');
+          const others = Array.from(gamesListEl.querySelectorAll('input[data-idx]'));
+          const allChecked = others.length && others.every(i=>i.checked);
+          if(all) all.checked = allChecked;
+          applyAll(); updateGamesSummary();
+        });
+      });
 
-<video autoplay src="/rickroll.mp4"></video>
+      updateGamesSummary();
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    function getSelectedGames(){
+      const all = gamesListEl.querySelector('input[data-game="__all__"]');
+      if(!all) return null; // no filters present
+      if(all.checked) return null; // null means "all games allowed"
 
-<video autoplay src="/rickroll.mp4"></video>
+      // collect indices and map to names
+      const idxs = Array.from(gamesListEl.querySelectorAll('input[data-idx]')).filter(cb=>cb.checked).map(cb=>Number(cb.dataset.idx));
+      if(!idxs.length) return null;
 
-<video autoplay src="/rickroll.mp4"></video>
+      const games = Array.from(new Set(items.map(it=>it.game))).sort((a,b)=> a.localeCompare(b));
+      const selectedSet = new Set(idxs.map(i=>games[i]));
+      return selectedSet;
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    function updateGamesSummary(){
+      const all = gamesListEl.querySelector('input[data-game="__all__"]');
+      if(!all){ gamesSummary.textContent = 'All'; return; }
+      if(all.checked){ gamesSummary.textContent = 'All'; return; }
+      const chosen = Array.from(gamesListEl.querySelectorAll('input[data-idx]:checked')).map(cb=> cb.dataset.idx);
+      if(!chosen.length){ gamesSummary.textContent = 'None'; return; }
+      // map to names
+      const games = Array.from(new Set(items.map(it=>it.game))).sort((a,b)=> a.localeCompare(b));
+      const names = chosen.slice(0,3).map(i=> games[Number(i)] );
+      gamesSummary.textContent = names.join(', ') + (chosen.length>3? '…':'');
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* ------------------
+       Search + sort + render pipeline
+       - safe highlight (no regex construction from user input)
+       - highlight both name and id matches
+    ------------------ */
+    function applyAll(){
+      const q = qEl.value.trim().toLowerCase();
+      const sortBy = sortSel.value;
+      const selectedGames = getSelectedGames();
 
-<video autoplay src="/rickroll.mp4"></video>
+      filtered = items.filter(it => {
+        // game filter
+        if(selectedGames && !selectedGames.has(it.game)) return false;
+        // search filter
+        if(!q) return true;
+        return (it.name + ' ' + it.id + ' ' + it.game).toLowerCase().includes(q);
+      });
 
-<video autoplay src="/rickroll.mp4"></video>
+      filtered.sort((a,b)=> sortBy==='name' ? a.name.localeCompare(b.name) : a.id.localeCompare(b.id));
+      render(filtered, q);
+      countEl.textContent = `${filtered.length} / ${items.length} items`;
+      focusedIndex = -1;
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    const debouncedApply = debounce(applyAll, 120);
+    qEl.addEventListener('input', debouncedApply);
+    sortSel.addEventListener('change', applyAll);
+    clearBtn.addEventListener('click', ()=>{ qEl.value=''; applyAll(); qEl.focus(); });
+    reloadBtn.addEventListener('click', ()=> loadFromPath());
 
-<video autoplay src="/rickroll.mp4"></video>
+    function escapeHtml(s){ return String(s).replace(/[&<>]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
-<video autoplay src="/rickroll.mp4"></video>
+    // SAFE highlight: do not use RegExp with raw user input. Use indexOf and slicing.
+    function highlight(text, q){
+      if(!q) return escapeHtml(text);
+      const lower = text.toLowerCase();
+      const needle = q.toLowerCase();
+      let i = 0; let out = '';
+      while(true){
+        const idx = lower.indexOf(needle, i);
+        if(idx === -1){ out += escapeHtml(text.slice(i)); break; }
+        out += escapeHtml(text.slice(i, idx));
+        out += '<mark>' + escapeHtml(text.slice(idx, idx + needle.length)) + '</mark>';
+        i = idx + needle.length;
+      }
+      return out;
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    /* ------------------
+       Render list rows
+    ------------------ */
+    function render(list, q){
+      listEl.innerHTML = '';
+      if(!list.length){ listEl.innerHTML = '<div class="empty">No results — try a different search or change game filters.</div>'; return; }
 
-<video autoplay src="/rickroll.mp4"></video>
+      list.forEach((it, idx)=>{
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.tabIndex = 0;
+        row.dataset.index = idx;
 
-<video autoplay src="/rickroll.mp4"></video>
+        // build innerHTML using safe escaping + highlight
+        row.innerHTML = `
+          <div>
+            <div class="name">${highlight(it.name, q)}</div>
+            <div style="margin-top:6px"><span class="badge">${escapeHtml(it.game)}</span></div>
+          </div>
+          <div class="id">${highlight(it.id, q)}</div>
+          <div class="actions"><button class="copy-btn" data-id="${escapeHtml(it.id)}">Copy</button></div>
+          <button class="icon-btn" title="Copy ID" aria-label="Copy ID" data-id="${escapeHtml(it.id)}">📋</button>
+        `;
 
-<video autoplay src="/rickroll.mp4"></video>
+        // click handlers for copy buttons
+        row.querySelectorAll('[data-id]').forEach(btn => btn.addEventListener('click', e => {
+          e.stopPropagation(); copyToClipboard(btn.dataset.id); setRowFocused(idx);
+        }));
 
-<video autoplay src="/rickroll.mp4"></video>
+        // keyboard nav per row
+        row.addEventListener('keydown', e => {
+          if(e.key === 'ArrowDown'){ e.preventDefault(); focusRow(idx + 1); }
+          else if(e.key === 'ArrowUp'){ e.preventDefault(); focusRow(idx - 1); }
+          else if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); copyToClipboard(it.id); setRowFocused(idx); }
+        });
 
-<video autoplay src="/rickroll.mp4"></video>
+        row.addEventListener('click', ()=> setRowFocused(idx));
+        listEl.appendChild(row);
+      });
+    }
 
-<video autoplay src="/rickroll.mp4"></video>
+    function focusRow(i){ if(i < 0) i = 0; if(i >= filtered.length) i = filtered.length - 1; const el = listEl.querySelector('[data-index="'+i+'"]'); if(el){ el.focus(); setRowFocused(i); } }
+    function setRowFocused(i){ const prev = listEl.querySelector('[aria-selected="true"]'); if(prev) prev.removeAttribute('aria-selected'); const el = listEl.querySelector('[data-index="'+i+'"]'); if(el){ el.setAttribute('aria-selected','true'); focusedIndex = i; } }
 
-<video autoplay src="/rickroll.mp4"></video>
+    async function copyToClipboard(txt){
+      try{ await navigator.clipboard.writeText(txt); showToast('Copied: ' + txt.slice(0,40)); }
+      catch(e){ showToast('Clipboard failed'); }
+    }
 
+    /* ------------------
+       Global keyboard shortcuts
+    ------------------ */
+    window.addEventListener('keydown', e => {
+      // / focuses search
+      if(e.key === '/' && document.activeElement !== qEl){ e.preventDefault(); qEl.focus(); }
+      // ctrl/cmd+k focuses search
+      if(e.key === 'k' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); qEl.focus(); }
+      // navigation
+      if(e.key === 'ArrowDown'){ e.preventDefault(); focusRow((focusedIndex === -1) ? 0 : focusedIndex + 1); }
+      if(e.key === 'ArrowUp'){ e.preventDefault(); focusRow((focusedIndex === -1) ? 0 : focusedIndex - 1); }
+      if(e.key === 'Escape'){ qEl.value = ''; applyAll(); }
+    });
+
+    /* ------------------
+       Games dropdown behavior
+    ------------------ */
+    gamesToggle.addEventListener('click', ()=>{
+      const open = gamesPanel.classList.toggle('show');
+      gamesToggle.setAttribute('aria-expanded', String(open));
+      gamesPanel.setAttribute('aria-hidden', String(!open));
+    });
+
+    // click outside closes panel
+    document.addEventListener('click', e => {
+      if(!e.target.closest('.games-dropdown')){
+        gamesPanel.classList.remove('show');
+        gamesToggle.setAttribute('aria-expanded', 'false');
+        gamesPanel.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    // initial load
+    loadFromPath();
+
+    // expose for debugging
+    window._smartList = { loadFromPath, applyAll };
+  </script>
+</body>
+</html>
