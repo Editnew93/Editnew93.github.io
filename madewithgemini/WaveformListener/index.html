@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HD Pitch-Scaled Green Waveform Audio Player</title>
+    <title>Cyberpunk HD Pitch-Scaled Green Waveform Audio Player</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            background-color: #0b0f19;
+            background-color: #05070b;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
@@ -27,56 +27,76 @@
         /* Top Controls UI */
         .controls {
             position: absolute;
-            top: 30px;
+            top: 25px;
             z-index: 10;
             display: flex;
             gap: 15px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(10, 15, 25, 0.75);
             padding: 10px 20px;
             border-radius: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
         input[type="file"] {
-            color: #aaa;
-            font-size: 14px;
+            color: #10b981;
+            font-size: 13px;
         }
 
-        button {
+        input[type="file"]::file-selector-button {
             background: #10b981;
-            color: white;
+            color: #000;
             border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 6px 14px;
+            border-radius: 15px;
             cursor: pointer;
             font-weight: bold;
             transition: background 0.2s;
         }
 
+        input[type="file"]::file-selector-button:hover {
+            background: #059669;
+            color: #fff;
+        }
+
+        button {
+            background: #10b981;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
         button:hover {
             background: #059669;
+            color: #fff;
+            box-shadow: 0 0 10px #10b981;
         }
 
         button:disabled {
             background: #064e3b;
-            color: #065f46;
+            color: #042f24;
             cursor: not-allowed;
+            box-shadow: none;
         }
 
-        /* Hide UI button is hidden by default in normal mode */
         #hideUiBtn {
-            background: #334155;
+            background: #1e293b;
+            color: #cbd5e1;
             display: none; 
         }
 
         #hideUiBtn:hover {
-            background: #475569;
+            background: #334155;
+            color: #fff;
         }
 
-        /* Show Hide UI button only when in fullscreen */
         .player-container:fullscreen #hideUiBtn,
         .player-container:-webkit-full-screen #hideUiBtn {
             display: inline-block;
@@ -86,70 +106,56 @@
         .player-container {
             background: #000000;
             border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
             position: relative;
-            width: 740px;
+            width: 780px;
             transition: all 0.3s ease;
         }
 
-        /* Fullscreen state layout */
-        .player-container:fullscreen {
-            width: 100vw;
-            height: 100vh;
-            border-radius: 0;
-            justify-content: space-between;
-            background: #000000;
-            padding: 140px 60px 40px 60px;
+        .player-container.dragover {
+            border: 2px dashed #10b981;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.4);
         }
 
+        /* Fullscreen state layout */
+        .player-container:fullscreen,
         .player-container:-webkit-full-screen {
             width: 100vw;
             height: 100vh;
             border-radius: 0;
             justify-content: space-between;
             background: #000000;
-            padding: 140px 60px 40px 60px;
+            padding: 120px 60px 40px 60px;
+            border: none;
         }
 
         canvas {
             display: block;
-            border-radius: 12px;
-            width: 700px;
-            height: 180px;
+            border-radius: 14px;
+            width: 730px;
+            height: 200px;
+            background: #020408;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
         }
 
-        .player-container:fullscreen canvas {
-            width: 100%;
-            height: 55vh;
-        }
-
+        .player-container:fullscreen canvas,
         .player-container:-webkit-full-screen canvas {
             width: 100%;
-            height: 55vh;
+            height: 58vh;
         }
 
         .fullscreen-bottom-group {
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 16px;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .player-container:fullscreen .fullscreen-bottom-group {
-            max-width: 100%;
-            margin: 0 auto;
-        }
-
-        .player-container:-webkit-full-screen .fullscreen-bottom-group {
-            max-width: 100%;
-            margin: 0 auto;
         }
 
         .player-actions {
@@ -157,7 +163,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 5px;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 0 4px;
         }
 
         .action-buttons-right {
@@ -166,15 +174,19 @@
             align-items: center;
         }
 
-        .speed-control {
+        .control-group {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
             color: #94a3b8;
+            background: #0b0f19;
+            padding: 6px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .speed-control select {
+        .control-group select, .control-group input[type="range"] {
             background: #1e293b;
             color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -184,12 +196,18 @@
             outline: none;
         }
 
+        .control-group input[type="range"] {
+            width: 80px;
+            height: 5px;
+            accent-color: #10b981;
+        }
+
         .seek-container {
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            padding: 0 5px;
+            gap: 6px;
+            padding: 0 4px;
         }
 
         .seek-slider {
@@ -220,21 +238,33 @@
         .time-display {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
+            font-size: 12px;
             color: #64748b;
             font-variant-numeric: tabular-nums;
         }
 
         .track-info {
             position: absolute;
-            bottom: 30px;
-            font-size: 15px;
+            bottom: 25px;
+            font-size: 14px;
             letter-spacing: 0.5px;
             color: #64748b;
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
-        /* UI Hidden State (Triggered by Hide Button or 'S' key) */
+        .toggle-btn {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .toggle-btn.active {
+            background: #064e3b;
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        /* UI Hidden State */
         body.ui-hidden .controls,
         body.ui-hidden .fullscreen-bottom-group,
         body.ui-hidden .track-info {
@@ -243,13 +273,11 @@
             pointer-events: none;
         }
 
-        /* Completely borderless full screen when UI is hidden */
-        body.ui-hidden .player-container:fullscreen {
-            padding: 0;
-        }
+        body.ui-hidden .player-container:fullscreen,
         body.ui-hidden .player-container:-webkit-full-screen {
             padding: 0;
         }
+        
         body.ui-hidden canvas {
             width: 100vw !important;
             height: 100vh !important;
@@ -261,7 +289,7 @@
 
     <div class="controls" id="topControls">
         <input type="file" id="audiofile" accept="audio/*">
-        <button id="playbtn" disabled>Play / Pause</button>
+        <button id="playbtn" disabled>Play</button>
     </div>
 
     <div class="player-container" id="playerContainer">
@@ -277,26 +305,38 @@
             </div>
 
             <div class="player-actions">
-                <div class="speed-control">
-                    <label for="speedSelect">Speed & Pitch:</label>
-                    <select id="speedSelect">
-                        <option value="0.5">0.5x (Low Pitch)</option>
-                        <option value="0.75">0.75x</option>
-                        <option value="1" selected>1.0x (Normal)</option>
-                        <option value="1.25">1.25x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="2">2.0x (Chipmunk / High Pitch)</option>
-                    </select>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="control-group">
+                        <label for="speedSelect">Speed:</label>
+                        <select id="speedSelect">
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1.0x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2.0x</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="volumeSlider">Vol:</label>
+                        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+                    </div>
+
+                    <button id="bassBoostBtn" class="toggle-btn" title="Toggle Bass Boost Filter">Bass Boost</button>
+                    <button id="loopBtn" class="toggle-btn" title="Toggle Track Loop">Loop</button>
                 </div>
+
                 <div class="action-buttons-right">
+                    <button id="exportMp4Btn" title="Export Full HD Waveform Video">Export HD MP4</button>
                     <button id="hideUiBtn" title="Hide UI (Press S to show)">Hide UI</button>
-                    <button id="fullscreenBtn">Fullscreen Wave</button>
+                    <button id="fullscreenBtn">Fullscreen</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="track-info" id="trackInfo">Upload an audio file to begin</div>
+    <div class="track-info" id="trackInfo">Drag & Drop an audio file or use the file picker to begin</div>
 
     <audio id="audio" crossorigin="anonymous"></audio>
 
@@ -311,13 +351,19 @@
         const currentTimeEl = document.getElementById('currentTime');
         const durationEl = document.getElementById('duration');
         const speedSelect = document.getElementById('speedSelect');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const bassBoostBtn = document.getElementById('bassBoostBtn');
+        const loopBtn = document.getElementById('loopBtn');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const hideUiBtn = document.getElementById('hideUiBtn');
+        const exportMp4Btn = document.getElementById('exportMp4Btn');
         const playerContainer = document.getElementById('playerContainer');
 
-        let audioCtx, analyser, source, dataArray;
+        let audioCtx, analyser, source, bassFilter, dataArray;
         let isPlaying = false;
         let isSeeking = false;
+        let isExporting = false;
+        let isBassBoosted = false;
 
         function resizeCanvas() {
             const dpr = window.devicePixelRatio || 1;
@@ -344,10 +390,34 @@
             return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
+        // Drag and Drop support
+        ['dragenter', 'dragover'].forEach(eventName => {
+            playerContainer.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                playerContainer.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            playerContainer.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                playerContainer.classList.remove('dragover');
+            }, false);
+        });
+
+        playerContainer.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('audio/')) {
+                loadAudioFile(file);
+            }
+        });
+
         audioFile.addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (!file) return;
+            if (file) loadAudioFile(file);
+        });
 
+        function loadAudioFile(file) {
             audioEle.src = URL.createObjectURL(file);
             trackInfo.textContent = `Now Playing: ${file.name}`;
             playBtn.disabled = false;
@@ -356,10 +426,10 @@
                 seekSlider.max = audioEle.duration;
                 durationEl.textContent = formatTime(audioEle.duration);
                 seekSlider.disabled = false;
-            });
+            }, { once: true });
 
             initAudioContext();
-        });
+        }
 
         function initAudioContext() {
             if (!audioCtx) {
@@ -367,7 +437,13 @@
                 analyser = audioCtx.createAnalyser();
                 source = audioCtx.createMediaElementSource(audioEle);
                 
-                source.connect(analyser);
+                bassFilter = audioCtx.createBiquadFilter();
+                bassFilter.type = 'lowshelf';
+                bassFilter.frequency.setValueAtTime(200, audioCtx.currentTime);
+                bassFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+
+                source.connect(bassFilter);
+                bassFilter.connect(analyser);
                 analyser.connect(audioCtx.destination);
                 
                 analyser.fftSize = 2048;
@@ -377,7 +453,8 @@
         }
 
         playBtn.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') {
+            if (isExporting) return;
+            if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
 
@@ -393,44 +470,163 @@
             }
         });
 
+        volumeSlider.addEventListener('input', (e) => {
+            audioEle.volume = parseFloat(e.target.value);
+        });
+
+        bassBoostBtn.addEventListener('click', () => {
+            isBassBoosted = !isBassBoosted;
+            bassBoostBtn.classList.toggle('active', isBassBoosted);
+            if (bassFilter) {
+                bassFilter.gain.setValueAtTime(isBassBoosted ? 12 : 0, audioCtx.currentTime);
+            }
+        });
+
+        loopBtn.addEventListener('click', () => {
+            audioEle.loop = !audioEle.loop;
+            loopBtn.classList.toggle('active', audioEle.loop);
+        });
+
         speedSelect.addEventListener('change', (e) => {
             const val = parseFloat(e.target.value);
             audioEle.playbackRate = val;
-            if (audioEle.preservesPitch !== undefined) audioEle.preservesPitch = false;
-            if (audioEle.mozPreservesPitch !== undefined) audioEle.mozPreservesPitch = false;
-            if (audioEle.webkitPreservesPitch !== undefined) audioEle.webkitPreservesPitch = false;
+            ['preservesPitch', 'mozPreservesPitch', 'webkitPreservesPitch'].forEach(prop => {
+                if (audioEle[prop] !== undefined) audioEle[prop] = false;
+            });
         });
 
         fullscreenBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
-                if (playerContainer.requestFullscreen) {
-                    playerContainer.requestFullscreen();
-                } else if (playerContainer.webkitRequestFullscreen) {
-                    playerContainer.webkitRequestFullscreen();
-                }
+                (playerContainer.requestFullscreen || playerContainer.webkitRequestFullscreen)?.call(playerContainer);
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                document.exitFullscreen?.();
             }
         });
 
-        // Hide UI Button Action
+        // High Quality & Optimized HD MP4 Export
+        exportMp4Btn.addEventListener('click', async () => {
+            if (!audioEle.src || !dataArray) {
+                alert('Please load an audio file first!');
+                return;
+            }
+            if (isExporting) return;
+            isExporting = true;
+            exportMp4Btn.textContent = 'Rendering HD...';
+            exportMp4Btn.disabled = true;
+            playBtn.disabled = true;
+
+            audioEle.pause();
+            isPlaying = false;
+            audioEle.currentTime = 0;
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+            const recCanvas = document.createElement('canvas');
+            recCanvas.width = 1920;
+            recCanvas.height = 1080;
+            const rCtx = recCanvas.getContext('2d', { alpha: false });
+
+            const dest = audioCtx.createMediaStreamDestination();
+            bassFilter.connect(dest);
+
+            const canvasStream = recCanvas.captureStream(60); // 60 FPS for buttery smoothness
+            const combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...dest.stream.getAudioTracks()
+            ]);
+
+            let mimeType = 'video/webm;codecs=vp9,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+            }
+
+            let mediaRecorder;
+            try {
+                mediaRecorder = new MediaRecorder(combinedStream, { 
+                    mimeType: mimeType,
+                    videoBitsPerSecond: 12000000 // 12 Mbps for pristine crisp HD quality
+                });
+            } catch (e) {
+                mediaRecorder = new MediaRecorder(combinedStream);
+            }
+
+            let chunks = [];
+            mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                a.download = `waveform-hd-export.${ext}`;
+                a.click();
+
+                isExporting = false;
+                exportMp4Btn.textContent = 'Export HD MP4';
+                exportMp4Btn.disabled = false;
+                playBtn.disabled = false;
+                playBtn.textContent = 'Play';
+            };
+
+            mediaRecorder.start();
+            audioEle.play();
+
+            function recordLoop() {
+                if (audioEle.paused || audioEle.ended) {
+                    if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+                    return;
+                }
+                requestAnimationFrame(recordLoop);
+
+                analyser.getByteTimeDomainData(dataArray);
+                rCtx.fillStyle = '#000000';
+                rCtx.fillRect(0, 0, 1920, 1080);
+
+                const layers = 4; // Optimized layers for lag-free 60fps encoding
+                for (let l = 0; l < layers; l++) {
+                    rCtx.beginPath();
+                    let alpha = (l === layers - 1) ? 0.95 : 0.3 + (l * 0.15);
+                    rCtx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+                    rCtx.lineWidth = (l === layers - 1) ? 3 : 1.5;
+
+                    let yOffset = (l - Math.floor(layers / 2)) * 10;
+                    let sliceWidth = 1920 / dataArray.length;
+                    let x = 0;
+
+                    for (let i = 0; i < dataArray.length; i++) {
+                        let v = dataArray[i] / 128.0;
+                        let multiplier = 1 + (l * 0.04);
+                        let y = (1080 / 2) + ((v - 1) * (1080 / 2) * multiplier) + yOffset;
+                        if (i === 0) rCtx.moveTo(x, y);
+                        else rCtx.lineTo(x, y);
+                        x += sliceWidth;
+                    }
+                    rCtx.shadowBlur = 15; // Optimized blur to prevent lag
+                    rCtx.shadowColor = '#10b981';
+                    rCtx.stroke();
+                }
+            }
+
+            audioEle.onended = () => {
+                if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+                audioEle.onended = null;
+            };
+
+            recordLoop();
+        });
+
         hideUiBtn.addEventListener('click', () => {
             document.body.classList.add('ui-hidden');
             setTimeout(resizeCanvas, 50);
         });
 
-        // Keyboard Shortcuts ('S' to show UI, 'P' to play/pause)
         window.addEventListener('keydown', (e) => {
+            if (isExporting) return;
             const key = e.key.toLowerCase();
             if (key === 's') {
                 document.body.classList.remove('ui-hidden');
                 setTimeout(resizeCanvas, 50);
-            } else if (key === 'p') {
-                if (!playBtn.disabled) {
-                    playBtn.click();
-                }
+            } else if (key === 'p' && !playBtn.disabled) {
+                playBtn.click();
             }
         });
 
@@ -460,14 +656,12 @@
             const displayWidth = canvas.clientWidth;
             const displayHeight = canvas.clientHeight;
 
-            ctx.fillStyle = '#000000';
+            ctx.fillStyle = '#020408';
             ctx.fillRect(0, 0, displayWidth, displayHeight);
 
             const layers = 5;
-            
             for (let l = 0; l < layers; l++) {
                 ctx.beginPath();
-
                 let alpha = (l === layers - 1) ? 0.95 : 0.25 + (l * 0.1);
                 ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
                 ctx.lineWidth = (l === layers - 1) ? 2 : 1;
@@ -481,12 +675,8 @@
                     let multiplier = 1 + (l * 0.04);
                     let y = (displayHeight / 2) + ((v - 1) * (displayHeight / 2) * multiplier) + yOffset;
 
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
                     x += sliceWidth;
                 }
 
@@ -498,10 +688,10 @@
 
         const initW = canvas.clientWidth;
         const initH = canvas.clientHeight;
-        ctx.fillStyle = '#000000';
+        ctx.fillStyle = '#020408';
         ctx.fillRect(0, 0, initW, initH);
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.moveTo(0, initH / 2);
         ctx.lineTo(initW, initH / 2);
